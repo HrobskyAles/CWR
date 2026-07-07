@@ -119,7 +119,7 @@ TEST_CASE("Config, data, and cache dirs are distinct on Linux", "[platformPaths]
     std::string data = Poseidon::Foundation::getUserDataDir("TestApp_Distinct");
     std::string cache = Poseidon::Foundation::getUserCacheDir("TestApp_Distinct");
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
     // On Linux with XDG defaults, these should be different base paths
     REQUIRE(config != data);
     REQUIRE(config != cache);
@@ -135,7 +135,7 @@ TEST_CASE("Config, data, and cache dirs are distinct on Linux", "[platformPaths]
     fs::remove_all(cache);
 }
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
 TEST_CASE("getUserConfigDir respects XDG_CONFIG_HOME", "[platformPaths]")
 {
     // Use a temp directory to override XDG_CONFIG_HOME
@@ -191,6 +191,30 @@ TEST_CASE("getUserConfigDir falls back to HOME/.config when XDG unset", "[platfo
     std::string expected = (tmpHome / ".config" / "TestApp_Fallback").string();
     REQUIRE(dir == expected);
     REQUIRE(dirExists(dir));
+
+    fs::remove_all(tmpHome);
+}
+#endif
+
+#ifdef __APPLE__
+TEST_CASE("macOS platform paths use Library conventions", "[platformPaths][macos]")
+{
+    auto tmpHome = fs::temp_directory_path() / "test_macos_home";
+    fs::create_directories(tmpHome);
+
+    ScopedEnv homeEnv("HOME", tmpHome.c_str());
+
+    std::string config = Poseidon::Foundation::getUserConfigDir("TestApp_MacPaths");
+    std::string data = Poseidon::Foundation::getUserDataDir("TestApp_MacPaths");
+    std::string cache = Poseidon::Foundation::getUserCacheDir("TestApp_MacPaths");
+    std::string documents = Poseidon::Foundation::getUserDocumentsDir("TestApp_MacPaths");
+
+    REQUIRE(config == (tmpHome / "Library" / "Application Support" / "TestApp_MacPaths").string());
+    REQUIRE(data == config);
+    REQUIRE(documents == config);
+    REQUIRE(cache == (tmpHome / "Library" / "Caches" / "TestApp_MacPaths").string());
+    REQUIRE(dirExists(config));
+    REQUIRE(dirExists(cache));
 
     fs::remove_all(tmpHome);
 }
