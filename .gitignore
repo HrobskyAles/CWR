@@ -3,6 +3,7 @@
 /dist/
 /bin/
 /obj/
+/.worktrees/
 **/vcpkg_installed/
 CMakeUserPresets.json
 
