@@ -24,7 +24,10 @@ add_library(PoseidonOpenAL STATIC
 find_package(OpenAL CONFIG REQUIRED)
 set_target_properties(OpenAL::OpenAL PROPERTIES IMPORTED_GLOBAL TRUE)
 
-target_link_libraries(PoseidonOpenAL PUBLIC Poseidon)
+target_link_libraries(PoseidonOpenAL PUBLIC
+    Poseidon
+    OpenAL::OpenAL
+)
 
 if(WIN32)
     target_link_libraries(PoseidonOpenAL PUBLIC Avrt)

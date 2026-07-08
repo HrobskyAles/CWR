@@ -27,6 +27,9 @@ cmake --build build/win-x64-clang-rwdi
 
 On GNU/Linux, use the matching `linux-x64-clang-rwdi` preset.
 
+On Apple Silicon macOS, use the native `macos-arm64-clang` preset. See the
+[macOS build and run guide](docs/macos-build-and-run.md).
+
 ## Layout
 
 - [Apps](apps/README.md) - executable targets

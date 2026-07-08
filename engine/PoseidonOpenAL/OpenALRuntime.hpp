@@ -185,6 +185,19 @@ inline bool ResolveFunctions()
     GetApiStorage() = resolved;
     return true;
 }
+
+#if defined(AL_LIBTYPE_STATIC)
+inline bool BindLinkedSymbols()
+{
+    Api resolved;
+#define BIND_OPENAL_FUNCTION(name) resolved.name = &::name;
+    OPENAL_RUNTIME_FUNCTIONS(BIND_OPENAL_FUNCTION)
+#undef BIND_OPENAL_FUNCTION
+
+    GetApiStorage() = resolved;
+    return true;
+}
+#endif
 } // namespace detail
 
 inline bool EnsureLoaded()
@@ -193,6 +206,14 @@ inline bool EnsureLoaded()
         return detail::LoadSucceeded();
 
     detail::LoadAttempted() = true;
+#if defined(AL_LIBTYPE_STATIC)
+    if (!detail::BindLinkedSymbols())
+        return false;
+
+    detail::LoadSucceeded() = true;
+    detail::LastErrorStorage().clear();
+    return true;
+#else
     if (!detail::TryLoadModule())
         return false;
     if (!detail::ResolveFunctions())
@@ -205,6 +226,7 @@ inline bool EnsureLoaded()
     detail::LoadSucceeded() = true;
     detail::LastErrorStorage().clear();
     return true;
+#endif
 }
 
 inline bool IsAvailable()

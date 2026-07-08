@@ -5,6 +5,7 @@
 #include <Poseidon/Audio/Capture/SoundSystemCapture.hpp>
 #include <Poseidon/Audio/Capture/WaveCapture.hpp>
 #include <Poseidon/Audio/Dummy/SoundSystemDummy.hpp>
+#include <PoseidonOpenAL/OpenALRuntime.hpp>
 #include <string>
 #include <vector>
 
@@ -71,6 +72,15 @@ TEST_CASE("AudioFactory: registered backends are ordered by preference", "[Audio
     CHECK(backends[1].priority == 0);
     CHECK(std::string(backends[2].codeName) == "text");
     CHECK(backends[2].priority == -1);
+}
+
+TEST_CASE("OpenALRuntime: static OpenAL link is available", "[Audio][factory][oal]")
+{
+#if defined(AL_LIBTYPE_STATIC)
+    CHECK(OpenALRuntime::IsAvailable());
+#else
+    SKIP("OpenAL is not statically linked in this build");
+#endif
 }
 
 TEST_CASE("AudioFactory: unknown backend is reported", "[Audio][factory][registry]")
