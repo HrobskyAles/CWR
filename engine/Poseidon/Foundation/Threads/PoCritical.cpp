@@ -1,12 +1,45 @@
 #include <Poseidon/Foundation/Threads/PoCritical.hpp>
 #include <Poseidon/Foundation/Memory/CheckMem.hpp>
 
+#ifndef _WIN32
+#include <cstdlib>
+#endif
+
 namespace Poseidon::Foundation
 {
 
 #ifndef _WIN32
 
-pthread_mutex_t mutexInit = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+void initRecursiveMutex(pthread_mutex_t& mutex)
+{
+    pthread_mutexattr_t attr;
+    if (pthread_mutexattr_init(&attr) != 0)
+    {
+        std::abort();
+    }
+
+#if defined(PTHREAD_MUTEX_RECURSIVE)
+    constexpr int recursiveType = PTHREAD_MUTEX_RECURSIVE;
+#elif defined(PTHREAD_MUTEX_RECURSIVE_NP)
+    constexpr int recursiveType = PTHREAD_MUTEX_RECURSIVE_NP;
+#else
+#error "Recursive pthread mutexes are required"
+#endif
+
+    if (pthread_mutexattr_settype(&attr, recursiveType) != 0)
+    {
+        pthread_mutexattr_destroy(&attr);
+        std::abort();
+    }
+
+    if (pthread_mutex_init(&mutex, &attr) != 0)
+    {
+        pthread_mutexattr_destroy(&attr);
+        std::abort();
+    }
+
+    pthread_mutexattr_destroy(&attr);
+}
 
 #endif
 
@@ -22,7 +55,7 @@ PoCriticalSection::PoCriticalSection(const char* srcFile, int lineNo, const char
 #ifdef _WIN32
     InitializeCriticalSection(&cs);
 #else
-    mutex = mutexInit;
+    initRecursiveMutex(mutex);
 #endif
     id = registerLock(srcFile, lineNo, descr);
     error = false;
@@ -43,7 +76,7 @@ PoCriticalSection::PoCriticalSection(bool val)
 #ifdef _WIN32
         InitializeCriticalSection(&cs);
 #else
-        mutex = mutexInit;
+        initRecursiveMutex(mutex);
 #endif
     }
     error = false;
@@ -58,7 +91,7 @@ PoCriticalSection::PoCriticalSection()
 #ifdef _WIN32
     InitializeCriticalSection(&cs);
 #else
-    mutex = mutexInit;
+    initRecursiveMutex(mutex);
 #endif
     error = false;
 #ifdef LOCK_TRACING

@@ -81,6 +81,19 @@ list(FILTER ALL_SOURCES EXCLUDE REGEX "IO/ParamFile/ParamFileUsePreprocDefault\.
 # because the glob filters it out via REGEX above.
 # IO/Streams, IO/PreprocC, IO/ParamFile, Asset/Formats/Common, UI/Locale/Stringtable
 # all come from their parent subsystem's GLOB_RECURSE.
+set(POSEIDON_PLATFORM_PATHS_SOURCE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/PlatformPaths_posix.cpp
+)
+if(WIN32)
+    set(POSEIDON_PLATFORM_PATHS_SOURCE
+        ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/PlatformPaths_win.cpp
+    )
+elseif(APPLE)
+    set(POSEIDON_PLATFORM_PATHS_SOURCE
+        ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/PlatformPaths_macos.cpp
+    )
+endif()
+
 set(MERGED_SUPPORT_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Modules/Modules.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Containers/Bitmask.cpp
@@ -100,7 +113,7 @@ set(MERGED_SUPPORT_SOURCES
     $<IF:$<PLATFORM_ID:Windows>,${CMAKE_CURRENT_SOURCE_DIR}/IO/Filesystem/platform/FileOps_win.cpp,${CMAKE_CURRENT_SOURCE_DIR}/IO/Filesystem/platform/FileOps_posix.cpp>
     ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Enums/EnumNames.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/Platform.cpp
-    $<IF:$<PLATFORM_ID:Windows>,${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/PlatformPaths_win.cpp,${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/PlatformPaths_posix.cpp>
+    ${POSEIDON_PLATFORM_PATHS_SOURCE}
     ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/PlayerPrefs.cpp
     $<IF:$<PLATFORM_ID:Windows>,${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/ConsoleUtils_win.cpp,${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/ConsoleUtils_posix.cpp>
     ${CMAKE_CURRENT_SOURCE_DIR}/Foundation/Common/GamePaths.cpp
@@ -256,11 +269,12 @@ target_include_directories(Poseidon PUBLIC
 # ============================================================
 
 # Core dependencies (inherited by Client via PUBLIC link)
+find_package(Threads REQUIRED)
 target_link_libraries(Poseidon PUBLIC
     spdlog::spdlog
 )
 if(NOT WIN32)
-    target_link_libraries(Poseidon PUBLIC pthread dl)
+    target_link_libraries(Poseidon PUBLIC Threads::Threads ${CMAKE_DL_LIBS})
 endif()
 
 if(WIN32)

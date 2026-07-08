@@ -13,6 +13,14 @@ class PoSemaphore : public RefCountSafe
 
     HANDLE handle;
 
+#elif defined(__APPLE__)
+
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    long count;
+    long maxCount;
+    bool syncReady;
+
 #else
 
     sem_t sem;

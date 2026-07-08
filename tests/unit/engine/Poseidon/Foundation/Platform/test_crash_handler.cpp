@@ -12,14 +12,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-// A Linux crash must leave an offline-symbolizable trace, not a bare kernel "Segmentation
+// A POSIX crash must leave an offline-symbolizable trace, not a bare kernel "Segmentation
 // fault". Method: fork a child, install the handler pointed at a temp dir, raise SIGSEGV. The
 // child dies with SIGSEGV (the handler re-raises after writing the report). The parent then
 // asserts the report exists and carries every marker an offline symbolizer needs — the
 // signal, the build commit, a backtrace, the raw return addresses, and the module load bases
-// from /proc/self/maps (return-addr minus load-base = the offset for llvm-symbolizer/addr2line
-// against the matching release binary). Broken-state delta: without InstallCrashHandler the
-// child SIGSEGVs with no file written at all.
+// from /proc/self/maps on Linux (return-addr minus load-base = the offset for
+// llvm-symbolizer/addr2line against the matching release binary). Broken-state delta:
+// without InstallCrashHandler the child SIGSEGVs with no file written at all.
 
 TEST_CASE("crash handler writes a symbolizable report on a fatal signal", "[platform][crash]")
 {
@@ -52,7 +52,11 @@ TEST_CASE("crash handler writes a symbolizable report on a fatal signal", "[plat
     REQUIRE(report.find("commit ") != std::string::npos);
     REQUIRE(report.find("backtrace:") != std::string::npos);
     REQUIRE(report.find("return addresses:") != std::string::npos);
+#ifdef __linux__
     REQUIRE(report.find("/proc/self/maps:") != std::string::npos);
+#else
+    REQUIRE(report.find("/proc/self/maps:") == std::string::npos);
+#endif
 
     remove(path.c_str());
     rmdir(dir.c_str());

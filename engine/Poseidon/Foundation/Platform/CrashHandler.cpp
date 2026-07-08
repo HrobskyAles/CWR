@@ -115,7 +115,10 @@ void InstallCrashHandler(const char*)
 #include <fcntl.h>
 #include <execinfo.h>
 #include <sys/resource.h>
+
+#if defined(__linux__)
 #include <link.h>
+#endif
 
 namespace Poseidon::Foundation
 {
@@ -124,7 +127,7 @@ namespace
 constexpr int kFatalSignals[] = {SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS};
 
 char g_crashPath[4096];
-char g_buildId[80]; // hex of the main object's NT_GNU_BUILD_ID
+char g_buildId[80]; // platform build identifier written into crash reports
 volatile sig_atomic_t g_inHandler = 0;
 char g_altStack[65536]; // SIGSTKSZ is not a compile-time constant on modern glibc
 
@@ -243,12 +246,15 @@ void handler(int sig, siginfo_t* info, void* /*ucontext*/)
     }
 
     // Module load bases — only to the file; keeps the terminal output short.
+#if defined(__linux__)
     if (fd >= 0)
     {
         emit(fd, -1, "\n/proc/self/maps:\n");
         copyFileTo(fd, "/proc/self/maps");
-        close(fd);
     }
+#endif
+    if (fd >= 0)
+        close(fd);
 
     emit(-1, STDERR_FILENO, "\ncrash report written to ");
     emit(-1, STDERR_FILENO, g_crashPath);
@@ -258,7 +264,8 @@ void handler(int sig, siginfo_t* info, void* /*ucontext*/)
     raise(sig);
 }
 
-void captureBuildId()
+#if defined(__linux__)
+void captureLinuxBuildId()
 {
     g_buildId[0] = '\0';
     dl_iterate_phdr(
@@ -296,6 +303,16 @@ void captureBuildId()
             return 1; // only inspect the main executable (the first entry)
         },
         nullptr);
+}
+#endif
+
+void captureBuildId()
+{
+#if defined(__linux__)
+    captureLinuxBuildId();
+#else
+    std::snprintf(g_buildId, sizeof(g_buildId), "mach-o");
+#endif
 }
 } // namespace
 

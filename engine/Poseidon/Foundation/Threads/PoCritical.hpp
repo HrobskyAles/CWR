@@ -32,7 +32,7 @@
 namespace Poseidon::Foundation
 {
 #ifndef _WIN32
-extern pthread_mutex_t mutexInit;
+void initRecursiveMutex(pthread_mutex_t& mutex);
 #endif
 
 class PoCriticalSection : public Poseidon::Foundation::RefCount

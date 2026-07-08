@@ -164,7 +164,7 @@ class Mutex: public SignaledObject
 	public:
 	Mutex ()
 	{
-	    mutex = mutexInit;
+	    initRecursiveMutex(mutex);
 	}
 	void Unlock () const
 	{
@@ -210,7 +210,7 @@ class CriticalSection
 	public:
 	CriticalSection ()
 	{
-	    mutex = mutexInit;
+	    initRecursiveMutex(mutex);
 	}
 	~CriticalSection ()
 	{

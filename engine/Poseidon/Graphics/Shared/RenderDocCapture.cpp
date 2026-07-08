@@ -6,7 +6,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#else
+#elif defined(__linux__)
 #include <dlfcn.h>
 #endif
 
@@ -43,7 +43,7 @@ bool DoInit()
     s_api->GetAPIVersion(&maj, &min, &pat);
     LOG_INFO(Graphics, "RenderDoc API attached: v{}.{}.{}", maj, min, pat);
     return true;
-#else
+#elif defined(__linux__)
     // Linux: RenderDoc injects librenderdoc.so via LD_PRELOAD.  RTLD_NOLOAD
     // only returns a handle if it's already in the process (mirrors the
     // Windows GetModuleHandle behaviour — we never load it ourselves).
@@ -61,6 +61,8 @@ bool DoInit()
     s_api->GetAPIVersion(&maj, &min, &pat);
     LOG_INFO(Graphics, "RenderDoc API attached: v{}.{}.{}", maj, min, pat);
     return true;
+#else
+    return false;
 #endif
 }
 } // namespace

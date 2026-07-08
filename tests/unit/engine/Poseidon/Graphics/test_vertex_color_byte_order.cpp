@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <Poseidon/Graphics/Rendering/ColorsK.hpp>
+#include <Poseidon/Graphics/Rendering/Colors.hpp>
 
 #include <cstdint>
 #include <cstring>
