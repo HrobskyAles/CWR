@@ -18,6 +18,7 @@ REPO="<folder-to-game-data>/CWR"
 VCPKG_ROOT="<folder-to-game-data>/vcpkg"
 GAME_DATA="<folder-to-game-data>/Arma Cold War Assault Demo"
 ```
+
 Example:
 ```sh
 REPO="/Users/ali/Developer/OPF_Remaster/CWR"
