@@ -133,6 +133,80 @@ For the full CLI list:
 "$GAME_EXE" --help-full
 ```
 
+## Create A Local Demo DMG
+
+After building `PoseidonGameDemo`, you can create an unsigned local/test DMG
+that contains a self-contained `PoseidonGameDemo.app` bundle. The app bundle
+includes the native Apple Silicon binary and a copy of the demo game data under
+`Contents/Resources/GameData`.
+
+The packaging script reads the runtime binary from:
+
+```text
+dist/macos-arm64-clang/PoseidonGameDemo
+```
+
+If you followed the build steps above, CMake should already have copied the
+binary there. Confirm it is present and native arm64:
+
+```sh
+file dist/macos-arm64-clang/PoseidonGameDemo
+```
+
+Expected output includes:
+
+```text
+Mach-O 64-bit executable arm64
+```
+
+Create the DMG:
+
+```sh
+cd "$REPO"
+export GAME_DATA
+package/macos/make-local-demo-dmg.sh
+```
+
+If your game data is not in the `GAME_DATA` variable, pass it inline:
+
+```sh
+GAME_DATA="/path/to/Arma Cold War Assault Demo" \
+  package/macos/make-local-demo-dmg.sh
+```
+
+The script validates that `ditto`, `hdiutil`, the native binary, and the expected
+demo data directories are available. It then creates:
+
+```text
+dist/macos-arm64-clang/package/dmg-root/PoseidonGameDemo.app
+dist/macos-arm64-clang/PoseidonGameDemo-local-demo.dmg
+```
+
+Inside the app bundle, `Contents/MacOS/PoseidonGameDemo` is a launcher script
+that runs `PoseidonGameDemo.bin` with:
+
+```text
+-C Contents/Resources/GameData --window --no-splash
+```
+
+Verify the generated app and DMG:
+
+```sh
+test -x dist/macos-arm64-clang/package/dmg-root/PoseidonGameDemo.app/Contents/MacOS/PoseidonGameDemo
+test -x dist/macos-arm64-clang/package/dmg-root/PoseidonGameDemo.app/Contents/MacOS/PoseidonGameDemo.bin
+test -d dist/macos-arm64-clang/package/dmg-root/PoseidonGameDemo.app/Contents/Resources/GameData/DTA
+test -L dist/macos-arm64-clang/package/dmg-root/Applications
+hdiutil imageinfo dist/macos-arm64-clang/PoseidonGameDemo-local-demo.dmg
+```
+
+`hdiutil imageinfo` should report `Format: UDZO`.
+
+The generated DMG is unsigned and not notarized. It is meant for local testing,
+copying to another Mac, or demo validation. macOS Gatekeeper may warn when the
+app is opened; copy the app out of the mounted DMG before launching it. Do not
+redistribute a DMG containing bundled game data unless the relevant asset license
+allows it.
+
 ## Run Foundation Tests
 
 The macOS port was verified with the Foundation unit test suite:
@@ -156,4 +230,3 @@ base preset for your local build.
 
 If startup fails immediately with missing data, check that `GAME_DATA` points at
 the actual installed demo or game directory, not the source repository.
-

@@ -1,6 +1,6 @@
 # Arma: Cold War Assault - Remastered
 
-This repository holds the engine and game source code (codename *Poseidon*) behind *Arma: Cold War Assault* — the game first released in 2001 as *Operation Flashpoint: Cold War Crisis*. That release launched Bohemia Interactive and began the technology lineage that later grew into Real Virtuality, Arma, and Enfusion. The code has been modernized to C++20, built with CMake and Clang, with cross-platform support for Windows x64 and Linux x64.
+This repository holds the engine and game source code (codename *Poseidon*) behind *Arma: Cold War Assault* — the game first released in 2001 as *Operation Flashpoint: Cold War Crisis*. That release launched Bohemia Interactive and began the technology lineage that later grew into Real Virtuality, Arma, and Enfusion. The code has been modernized to C++20, built with CMake and Clang, with cross-platform support for Windows x64, Linux x64, and native Apple Silicon macOS.
 Bohemia Interactive is releasing it to the community that has kept this game alive for more than two decades — to study it, build on it, fix it, and create from it. Three things are worth keeping separate:
 
 **Source code (this repository)**
@@ -27,8 +27,36 @@ cmake --build build/win-x64-clang-rwdi
 
 On GNU/Linux, use the matching `linux-x64-clang-rwdi` preset.
 
-On Apple Silicon macOS, use the native `macos-arm64-clang` preset. See the
-[macOS build and run guide](docs/macos-build-and-run.md).
+On Apple Silicon macOS, use the native `macos-arm64-clang` preset:
+
+```sh
+export VCPKG_ROOT="/path/to/vcpkg"
+cmake --preset macos-arm64-clang
+cmake --build build/macos-arm64-clang --target PoseidonGameDemo
+```
+
+The macOS build writes the runnable demo binary to
+`dist/macos-arm64-clang/PoseidonGameDemo`. Run it by pointing `-C` at a demo or
+full game-data directory:
+
+```sh
+GAME_DATA="/path/to/Arma Cold War Assault Demo"
+dist/macos-arm64-clang/PoseidonGameDemo -C "$GAME_DATA" --window --no-splash
+```
+
+You can also create an unsigned local/test DMG that embeds the native
+`PoseidonGameDemo.app` bundle and demo game data:
+
+```sh
+GAME_DATA="/path/to/Arma Cold War Assault Demo" \
+  package/macos/make-local-demo-dmg.sh
+```
+
+The DMG is written to
+`dist/macos-arm64-clang/PoseidonGameDemo-local-demo.dmg`. It is intended for
+local testing only; do not redistribute bundled game data unless the relevant
+asset license allows it. See the [macOS build and run guide](docs/macos-build-and-run.md)
+for requirements, smoke tests, packaging details, and common troubleshooting.
 
 ## Layout
 
@@ -38,6 +66,7 @@ On Apple Silicon macOS, use the native `macos-arm64-clang` preset. See the
 - [Tests](tests/README.md) - test source trees; CI currently compiles them only
 - `cmake/` - presets, toolchains, vcpkg triplets, and overlay ports
 - `docker/` - container support for service and runtime environments
+- `package/` - local packaging scripts, including macOS DMG creation
 - `packages/` - ignored local game data staging area
 - `resources/` - application icon resources
 - `thirdparty/` - vendored third-party headers and sources
